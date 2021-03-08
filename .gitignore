@@ -30,6 +30,11 @@
 *.exe
 *.out
 *.app
+[a-z]*(_[a-z]*)?
 
 # Hidden Files and Secrets
 (\.[a-z]*)(\.[a-z]*)?
+
+# Backup files
+.*~
+
