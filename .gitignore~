@@ -32,4 +32,4 @@
 *.app
 
 # Hidden Files and Secrets
-(\.[a-z]*)(\.[a-z]*)?
+\.[a-z]*)(\.[a-z]*)?
