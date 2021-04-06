@@ -48,14 +48,25 @@ int main(void)
     for(int i = 0; i < 3; i++) {
     	try {   		
     		string key = prompt_key();
-    		if(strcmp(key.c_str(), "") == 0) // if invalid key
-    			continue;
+    		// COMMENTED OUT FOR TESTING PURPOSES
+    		//if(strcmp(key.c_str(), "") == 0) // if invalid key
+    		//	continue;
     			
     		
+    		
     		cout << gen_account_list() << endl;
-	   		cout << "Please enter the number of the password you would like to access.\n" << endl;
+    		
+    		if(accounts.size() <= 0)
+    		{
+    			cout << "No passwords stored. Please store passwords before accessing them." << endl;
+    			break;
+			}
     		int acct_num;
-    		cin >> acct_num;
+    		do
+    		{
+		   		cout << "Please enter the number of the password you would like to access.\n" << endl;
+				cin >> acct_num;
+    		} while(acct_num >= 1 and acct_num < accounts.size());
     		
     		string plaintext = "TESTING";
     		string ciphertext = accounts[acct_num - 1].second;

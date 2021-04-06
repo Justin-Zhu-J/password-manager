@@ -1,21 +1,9 @@
 #include "helpers.cpp"
 using namespace std;
 
-ofstream pass_fout;
-
-
-void load_pass_file(void) {
-	pass_fout.open(".passwords.txt", ios_base::app);
-}
-
-void write_to_pass_file(string account, string ciphertext_pass) {
-	pass_fout << account << endl << ciphertext_pass << endl;
-}
 
 int main(void)
 {
-    load_pass_file();
-    
     cout << welcome_text << endl;
     
     //cout << exec("echo \"hey\" | openssl enc -aes-256-cbc -salt -pbkdf2 -pass pass:hi") << endl;
@@ -26,8 +14,9 @@ int main(void)
     	try {
     		
     		string key = prompt_key();
-    		if(strcmp(key.c_str(), "") == 0) // if invalid key
-    			continue;
+    		// COMMENTED OUT FOR TESTING PURPOSES
+    		//if(strcmp(key.c_str(), "") == 0) // if invalid key
+    		//	continue;
     		
     		cout << "Please enter the name of the account you would like to store the password of:" << endl;
     		string account;
@@ -39,8 +28,7 @@ int main(void)
     		string choice;
     		cin >> choice;
     		if(!atoi(choice.c_str())) {
-    			plaintext = remove_endline(exec("./gen_password.sh"));
-    			plaintext = increase_complexity(plaintext);
+    			plaintext = remove_endline(exec("./gen_password"));
 			}
     		else {
     			plaintext = getpass("Please enter your existing password: ");
@@ -53,7 +41,7 @@ int main(void)
     		copy_to_clipboard(plaintext);
     		cout << "Password has been copied to clipboard." << endl;
     		
-    		write_to_pass_file(account, ciphertext);
+    		Password::appendFile(PASSWORD_FILE, new Password(account, 0, ciphertext));
     		
     		cout << "Have a nice day!" << endl;
     		system("sleep 1");
