@@ -1,7 +1,9 @@
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include "crypto.cpp"
 #include "utils.cpp"
+#include "helpers.cpp"
 using namespace std;
 
 /*typedef struct password {
@@ -10,29 +12,40 @@ using namespace std;
 	string ciphertext;
 } pw;*/
 
+enum Tier {NONE, EMAIL, PERSONAL, COMPROMISING};
+pair<Tier, string> tiers[] = {
+	make_pair(NONE, "No info"), make_pair(EMAIL, "Public Contact Info"), 
+	make_pair(PERSONAL, "Personal Data"), make_pair(COMPROMISING, "Secure Information (DO NOT STORE HERE)")
+};
+
 class Password
 {
 	private:
+		const static string STORAGE_FORMAT;
+		
 		string account;
-		int flags;
+		Tier tier;
 		string ciphertext;
 		
-		const static string STORAGE_FORMAT;
-	
 	public:
 		
-		Password(string acct, int flgs)
+		Password(string acct, Tier t)
 		{
 			account = acct;
-			flags = flgs;
+			tier = t;
 			ciphertext = remove_endline(exec("./gen_password"));
 		}
 		
-		Password(string acct, int flgs, string ciphertxt)
+		Password(string acct, Tier t, string ciphertxt)
 		{
 			account = acct;
-			flags = flgs;
+			tier = t;
 			ciphertext = ciphertxt;
+		}
+		
+		static Tier intToTier(int t)
+		{
+			return tiers[t].first;
 		}
 		
 		static vector<Password*> parseFile(string fileName)
@@ -42,13 +55,23 @@ class Password
 			
 			while(!fin.eof())
 			{
-				string acct, ciphertxt;
-				int flg;
+				string acct, ciphertxt, comma;
+				int tier;
 				
-				cin >> acct >> flg >> ciphertxt;
+				fin >> acct;
+				if(fin.eof())
+					break;
 				
-				list.push_back(new Password(acct, flg, ciphertxt));
+				fin >> tier >> comma >> ciphertxt;
+				//cout << "Account: " << acct << endl << tier << endl << comma << endl << ciphertxt << endl;
+				//exit(0);
+				acct = remove_endline(acct);
+				//cout << acct << tier << endl;
+				
+				list.push_back(new Password(acct, intToTier(tier), ciphertxt));
 			}
+			
+			fin.close();
 			
 			return list;
 		}
@@ -60,11 +83,12 @@ class Password
 			
 			for(int i = 0; i < pwlist.size(); i++)
 			{
-				fout << pwlist[i]->account << "," << pwlist[i]->flags << "," << pwlist[i]->ciphertext << endl;
+				fout << pwlist[i]->account << ", " << pwlist[i]->tier << ", " << pwlist[i]->ciphertext << endl;
 				delete pwlist[i];
 			}
 			
 			pwlist.clear();
+			fout.close();
 		}
 		
 		// Side effect: delete pw to ensure nothing sensitive is stored in memory
@@ -72,11 +96,30 @@ class Password
 		{
 			ofstream fout;
 			fout.open(fileName, ios_base::app);
-			fout << pw->account << "," << pw->flags << "," << pw->ciphertext << endl;
+			fout << pw->account << ", " << pw->tier << ", " << pw->ciphertext << endl;
 			delete pw;
+			fout.close();
+		}
+		
+		static string passwordMenu(vector<Password*> &pwlist)
+		{
+			vector<string> accts;
+			for(int i = 0; i < pwlist.size(); i++)
+			{
+				accts.push_back(pwlist[i]->account);
+			}
+			
+			return get_menu(accts);
+		}
+		
+		
+		// TODO be more secure about giving this out
+		string getCiphertext(void)
+		{
+			return ciphertext;
 		}
 };
 
 
-const string Password::STORAGE_FORMAT = "%s,%d,%s\n";
+const string Password::STORAGE_FORMAT = "%s, %d, %s\n";
 

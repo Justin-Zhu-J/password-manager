@@ -1,18 +1,11 @@
-#include "helpers.cpp"
+#include "password.cpp"
 using namespace std;
 
 ifstream pass_fin(".passwords.txt");
-
+/*
 vector< pair<string, string> > accounts;
 
 void load_pass_file(void) {
-	/*while(!pass_fin.eof()) {
-		string acct, passw;
-		pass_fin >> acct >> passw;
-		cout << acct << " " << passw << endl;
-		accounts.push_back(make_pair(acct, passw));
-	}*/
-	
 	// Based on code copied from here: https://stackoverflow.com/questions/7868936/read-file-line-by-line-using-ifstream-in-c
 	string acct, passw;
 	while (getline(pass_fin, acct))
@@ -35,44 +28,41 @@ string gen_account_list(void) {
 		menu += temp;
 	}
 	return menu + "\n";
-}
+}*/
 
 int main(void)
 {
-    load_pass_file();
     
     cout << welcome_text << endl;
+    
+    vector<Password*> pwlist = Password::parseFile(PASSWORD_FILE);
     
     int exception_count = 0;
     
     for(int i = 0; i < 3; i++) {
     	try {   		
     		string key = prompt_key();
-    		// COMMENTED OUT FOR TESTING PURPOSES
-    		//if(strcmp(key.c_str(), "") == 0) // if invalid key
-    		//	continue;
-    			
+    		if(strcmp(key.c_str(), "") == 0) // if invalid key
+    			continue;
     		
-    		
-    		cout << gen_account_list() << endl;
-    		
-    		if(accounts.size() <= 0)
+    		if(pwlist.size() <= 0)
     		{
     			cout << "No passwords stored. Please store passwords before accessing them." << endl;
     			break;
 			}
-    		int acct_num;
-    		do
-    		{
-		   		cout << "Please enter the number of the password you would like to access.\n" << endl;
-				cin >> acct_num;
-    		} while(acct_num >= 1 and acct_num < accounts.size());
+			
+			cout << Password::passwordMenu(pwlist) << endl;
+			
+    		int acct_num = get_choice(pwlist.size()) - 1;
     		
-    		string plaintext = "TESTING";
-    		string ciphertext = accounts[acct_num - 1].second;
+    		cout << __LINE__ << endl;
+    		
+    		string plaintext = decrypt(pwlist[acct_num]->getCiphertext(), key);
+    		
+    		cout << __LINE__ << endl;
+    		plaintext = remove_endline(plaintext);
     		
     		
-    		plaintext = remove_endline(decrypt(ciphertext, key));
     		
     		copy_to_clipboard(plaintext);
     		cout << "Password has been copied to clipboard." << endl;

@@ -1,5 +1,6 @@
 #include "shell_commands.cpp"
 #include "exec.cpp"
+#include ".secrets.h"
 #include <string>
 
 // for summary of options and which ones are used, go to https://wiki.openssl.org/index.php/Enc, 
@@ -11,6 +12,7 @@ std::string encrypt(std::string text, std::string passw) {
 	return exec(command.c_str());
 }
 std::string decrypt(std::string text, std::string passw) {
+	//cout << create_cipher_command("echo \"%s\" | openssl enc -aes-256-cbc -salt -pbkdf2 -d -a -pass pass:%s", text, passw).c_str() << endl;
 	return exec(create_cipher_command("echo \"%s\" | openssl enc -aes-256-cbc -salt -pbkdf2 -d -a -pass pass:%s", text, passw).c_str());
 }
 

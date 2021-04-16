@@ -1,4 +1,4 @@
-#include "helpers.cpp"
+#include "password.cpp"
 using namespace std;
 
 
@@ -14,9 +14,8 @@ int main(void)
     	try {
     		
     		string key = prompt_key();
-    		// COMMENTED OUT FOR TESTING PURPOSES
-    		//if(strcmp(key.c_str(), "") == 0) // if invalid key
-    		//	continue;
+    		if(strcmp(key.c_str(), "") == 0) // if invalid key
+    			continue;
     		
     		cout << "Please enter the name of the account you would like to store the password of:" << endl;
     		string account;
@@ -36,12 +35,12 @@ int main(void)
     		
     		//cout << plaintext << endl;
     		
-    		string ciphertext = encrypt(plaintext, key);
+    		string ciphertext = remove_endline(encrypt(plaintext, key));
     		
     		copy_to_clipboard(plaintext);
     		cout << "Password has been copied to clipboard." << endl;
     		
-    		Password::appendFile(PASSWORD_FILE, new Password(account, 0, ciphertext));
+    		Password::appendFile(PASSWORD_FILE, new Password(account, NONE, ciphertext));
     		
     		cout << "Have a nice day!" << endl;
     		system("sleep 1");
