@@ -48,7 +48,7 @@ int get_choice(int num_options) {
 			// TODO I'm tired and I'm not sure how cin works
 			// (is this part even necessary?)
 			int result = input;
-			return result;
+			return result - 1;
 		}
 		catch(...)
 		{
@@ -59,7 +59,8 @@ int get_choice(int num_options) {
 }
 
 
-int menu_choice(vector<string> options) {
+int menu_choice(vector<string> options, string title) {
+	cout << title << endl;
 	cout << get_menu(options) << endl;
 	return get_choice(options.size());
 }

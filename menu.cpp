@@ -1,11 +1,13 @@
 #include "password.cpp"
 using namespace std;
 
+void viewPasswords(void);
 string getPassword(string key);
 string createPassword(string key);
 string changePassword(string key);
-string removePassword(void);
+string deletePassword(string key);
 
+// TODO fix memory leaks
 
 int main(void)
 {
@@ -26,33 +28,51 @@ int main(void)
 	if(fails >= 3)
 		return 0;
     
-    vector<string> options {"Get Password", "Create Password", "Change Password", "Remove Password"};
+    vector<string> options {"View Passwords", "Get Password", "Create Password", "Change Password", "Delete Password", "Exit"};
     
-    int choice = menu_choice(options);
-    string password;
-    
-    switch(choice)
+    while(true)
     {
-    	case 0:
-    		// get password
-    		password = getPassword(key);
-    		break;
-    	case 1:
-    		// create password
-    		password = createPassword(key);
-    		break;
-    	case 2:
-    		// change password
-    		password = changePassword(key);
-    		break;
-    	case 3:
-    		// remove password
-    		password = removePassword();
-    		break;
-    }
-    
-    copy_to_clipboard(password);
-	cout << "Password has been copied to clipboard." << endl;
+		int choice = menu_choice(options, "Main Menu");
+		string password;
+		bool exiting = false;
+		switch(choice)
+		{
+			case 0:
+				// view passwords
+				viewPasswords();
+				break;
+			case 1:
+				// get password
+				password = getPassword(key);
+				break;
+			case 2:
+				// create password
+				password = createPassword(key);
+				break;
+			case 3:
+				// change password
+				password = changePassword(key);
+				break;
+			case 4:
+				// delete password
+				password = deletePassword(key);
+				break;
+			default:
+				cout << "Exiting..." << endl;
+				exiting = true;
+				break;
+		}
+		if(exiting)
+		{
+			copy_to_clipboard("FILLER_TEXT");
+			break;
+		}
+		if(choice > 0)
+		{
+			copy_to_clipboard(password);
+			cout << "Password has been copied to clipboard." << endl;
+		}
+	}
 	
 	cout << "Have a nice day!" << endl;
 	system("sleep 1");
@@ -61,18 +81,30 @@ int main(void)
 }
 
 
+void viewPasswords(void)
+{	
+	vector<Password*> pwlist = Password::parseFile(PASSWORD_FILE); 	
+	if(pwlist.size() <= 0)
+	{
+		cout << "No passwords stored. Please enter passwords before accessing them." << endl;
+		exit(0);
+	}
+	cout << Password::passwordMenu(pwlist) << endl;
+}
+
 string getPassword(string key)
 {
 	vector<Password*> pwlist = Password::parseFile(PASSWORD_FILE);
 	try {   		
 		if(pwlist.size() <= 0)
 		{
-			cout << "No passwords stored. Please store passwords before accessing them." << endl;
+			cout << "No passwords stored. Please enter passwords before accessing them." << endl;
 			exit(0);
 		}
 		
 		cout << Password::passwordMenu(pwlist) << endl;
 		
+		cout << "Please choose a password to retrieve" << endl;
 		int acct_num = get_choice(pwlist.size());
 		
 		string plaintext = decrypt(pwlist[acct_num]->getCiphertext(), key);
@@ -107,17 +139,77 @@ string createPassword(string key)
 	}
 	
 	string ciphertext = remove_endline(encrypt(plaintext, key));
-	Password::appendFile(PASSWORD_FILE, new Password(account, NONE, ciphertext));
+	Password::appendFile(PASSWORD_FILE, new Password(account, NONE, ciphertext, "NONE"));
 	return plaintext;
 }
 
 string changePassword(string key)
 {
-	return "";
+	vector<Password*> pwlist = Password::parseFile(PASSWORD_FILE);
+	try {   		
+		if(pwlist.size() <= 0)
+		{
+			cout << "No passwords stored. Please store passwords before removing them." << endl;
+			exit(0);
+		}
+		
+		cout << Password::passwordMenu(pwlist) << endl;
+		
+		cout << "Please choose a password to change" << endl;
+		int acct_num = get_choice(pwlist.size());
+		
+		cout << "Would you like to create a new password [0] or enter an existing one [1]?" << endl;
+		string choice;
+		cin >> choice;
+		
+		string plaintext;
+		if(!atoi(choice.c_str())) {
+			plaintext = remove_endline(exec("./gen_password"));
+		}
+		else {
+			plaintext = getpass("Please enter your existing password: ");
+		}
+		
+		string ciphertext = remove_endline(encrypt(plaintext, key));
+		Password *temp = pwlist[acct_num];
+		pwlist[acct_num] = new Password(temp, ciphertext);
+		delete temp;
+		Password::writeFile(PASSWORD_FILE, pwlist);
+		
+		return plaintext;
+	}
+	catch (int e) {
+		cout << "An exception occurred. Please try again." << endl;
+		exit(0);
+	}
 }
 
-string removePassword(void)
+string deletePassword(string key)
 {
-	return "";
+	vector<Password*> pwlist = Password::parseFile(PASSWORD_FILE);
+	try {   		
+		if(pwlist.size() <= 0)
+		{
+			cout << "No passwords stored. Please store passwords before removing them." << endl;
+			exit(0);
+		}
+		
+		cout << Password::passwordMenu(pwlist) << endl;
+		
+		cout << "Please choose a password to delete" << endl;
+		int acct_num = get_choice(pwlist.size());
+		
+		string plaintext = decrypt(pwlist[acct_num]->getCiphertext(), key);
+		
+		plaintext = remove_endline(plaintext);
+		pwlist.erase(pwlist.begin() + acct_num);
+		Password::writeFile(PASSWORD_FILE, pwlist);
+		
+		return plaintext;
+	}
+	catch (int e) {
+		cout << "An exception occurred. Please try again." << endl;
+		exit(0);
+	}
 }
 
