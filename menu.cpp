@@ -1,7 +1,7 @@
 #include "password.cpp"
 using namespace std;
 
-void viewPasswords(void);
+void viewAccounts(void);
 string getPassword(string key);
 string createPassword(string key);
 string changePassword(string key);
@@ -28,7 +28,8 @@ int main(void)
 	if(fails >= 3)
 		return 0;
     
-    vector<string> options {"View Passwords", "Get Password", "Create Password", "Change Password", "Delete Password", "Exit"};
+    vector<string> options {"View Accounts", "Get Password", "Create Password", "Change Password", 
+    						"Delete Password", "Reset Password", "Update Password Tier", "Change Password Group", "Exit"};
     
     while(true)
     {
@@ -38,23 +39,38 @@ int main(void)
 		switch(choice)
 		{
 			case 0:
-				// view passwords
-				viewPasswords();
+				// View accounts
+				viewAccounts();
 				break;
 			case 1:
-				// get password
+				// Get password
 				password = getPassword(key);
 				break;
 			case 2:
-				// create password
+				// Create password
 				password = createPassword(key);
 				break;
 			case 3:
-				// change password
+				// Change password
 				password = changePassword(key);
 				break;
 			case 4:
-				// delete password
+				// Delete password
+				password = deletePassword(key);
+				break;
+			case 5:
+				// Reset password
+				// TODO
+				password = deletePassword(key);
+				break;
+			case 6:
+				// TODO
+				// Update password tier
+				password = deletePassword(key);
+				break;
+			case 7:
+				// TODO
+				// Change password group
 				password = deletePassword(key);
 				break;
 			default:
@@ -81,7 +97,7 @@ int main(void)
 }
 
 
-void viewPasswords(void)
+void viewAccounts(void)
 {	
 	vector<Password*> pwlist = Password::parseFile(PASSWORD_FILE); 	
 	if(pwlist.size() <= 0)

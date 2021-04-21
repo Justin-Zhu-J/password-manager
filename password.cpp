@@ -8,13 +8,9 @@
 using namespace std;
 
 enum Tier {NONE, EMAIL, PERSONAL, COMPROMISING};
-pair<Tier, string> tiers[] = {
-	make_pair(NONE, "No info"), make_pair(EMAIL, "Public Contact Info"), 
-	make_pair(PERSONAL, "Personal Data"), make_pair(COMPROMISING, "Secure Information (DO NOT STORE HERE)")
-};
-
 // These are the factors that you multiply by to compare to the standard of updating once per year
-long long tier_durations[] = {0, 0, 2, 12};
+const long long MINUTE = 60, HOUR = 3600, DAY = 86400, MONTH = 2592000, YEAR = (long long) MONTH * 12;
+
 
 long long time_now(void)
 {
@@ -26,6 +22,10 @@ class Password
 {
 	private:
 		const static string STORAGE_FORMAT;
+		
+		const static pair<Tier, string> tiers[];
+
+		const static long long tier_freq[];
 		
 		string account;
 		Tier tier;
@@ -69,6 +69,45 @@ class Password
 			long long seconds = (long long) (mktime(&stored));
 			return seconds;
 		}
+		
+		static long long timeToReset(Password *pw)
+		{
+			// Don't worry about resetting if it's already publicly accessible
+			if(pw->tier <= EMAIL or tier_freq[pw->tier] <= 0)
+			{
+				return -1;
+			}
+			return max((YEAR / tier_freq[pw->tier]) - (time_now() - pw->last_update), (long long) 0);
+		}
+		
+		static int daysToReset(Password *pw)
+		{
+			long long time_to_reset = timeToReset(pw);
+			if(time_to_reset < 0)
+				return -1;
+			return timeToReset(pw) / DAY;
+		}
+		
+		static bool needsReset(Password *pw)
+		{
+			return daysToReset(pw) == 0;
+		}
+		
+		static void resetPassword(Password *pw)
+		{
+			pw->ciphertext = remove_endline(exec("./gen_password"));
+			pw->last_update = time_now();
+		}
+		
+		
+		Password(string acct, Tier t, string ciphertxt, string g, long long _last_update)
+		{
+			account = acct;
+			tier = t;
+			ciphertext = ciphertxt;
+			group = g;
+			last_update = _last_update;
+		}
 
 		
 	public:
@@ -89,15 +128,6 @@ class Password
 			ciphertext = ciphertxt;
 			group = g;
 			last_update = time_now();
-		}
-		
-		Password(string acct, Tier t, string ciphertxt, string g, long long _last_update)
-		{
-			account = acct;
-			tier = t;
-			ciphertext = ciphertxt;
-			group = g;
-			last_update = _last_update;
 		}
 		
 		Password(Password *other, string ciphertxt)
@@ -156,6 +186,8 @@ class Password
 			
 			for(int i = 0; i < pwlist.size(); i++)
 			{
+				if(needsReset(pwlist[i]))
+					resetPassword(pwlist[i]);
 				writePassword(fout, pwlist[i]);
 				delete pwlist[i];
 			}
@@ -181,6 +213,11 @@ class Password
 			{
 				// TODO do proper padding instead of just tabs
 				accts.push_back(pwlist[i]->account + "\t\t" + tiers[pwlist[i]->tier].second);
+				int days_to_reset = daysToReset(pwlist[i]);
+				if(days_to_reset > 0)
+					accts[i] += "\t\t" + to_string(days_to_reset) + " days until next password reset";
+				if(days_to_reset == 0)
+					accts[i] += "\t\tRESETTING ON EXIT";
 			}
 			
 			return "Stored Passwords\n" + get_menu(accts);
@@ -194,6 +231,12 @@ class Password
 		}
 };
 
-
+// INIT STATIC VALUES
 const string Password::STORAGE_FORMAT = "%s, %d, %s, %s, %d\n";
+const long long Password::tier_freq[] = {0, 0, 4, 12};
+const pair<Tier, string> Password::tiers[] = 
+	{
+		make_pair(NONE, "No info"), make_pair(EMAIL, "Public Contact Info"), 
+		make_pair(PERSONAL, "Personal Data"), make_pair(COMPROMISING, "Secure Information (DO NOT STORE HERE)")
+	};
 
