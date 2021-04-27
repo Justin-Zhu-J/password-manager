@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <map>
 #include "crypto.cpp"
 #include "utils.cpp"
 #include "helpers.cpp"
@@ -24,6 +25,7 @@ class Password
 		const static string STORAGE_FORMAT;
 		
 		const static pair<Tier, string> tiers[];
+		const static int NUM_TIERS;
 
 		const static long long tier_freq[];
 		
@@ -93,12 +95,6 @@ class Password
 			return daysToReset(pw) == 0;
 		}
 		
-		static void resetPassword(Password *pw)
-		{
-			pw->ciphertext = remove_endline(exec("./gen_password"));
-			pw->last_update = time_now();
-		}
-		
 		
 		Password(string acct, Tier t, string ciphertxt, string g, long long _last_update)
 		{
@@ -139,15 +135,62 @@ class Password
 			last_update = time_now();
 		}
 		
+		~Password()
+		{
+			account = "FILLER_TEXT_GOES_HERE";
+			ciphertext = "FILLER_TEXT_GOES_HERE - I think this part has to have a certain length right?";
+			tier = NONE;
+			group = "FILLER_TEXT_GOES_HERE";
+			last_update = time_now();
+		}
+		
 		static Tier intToTier(int t)
 		{
 			return tiers[t].first;
 		}
 		
-		static vector<Password*> parseFile(string fileName)
+		static void resetPassword(Password *pw)
 		{
+			pw->ciphertext = remove_endline(exec("./gen_password"));
+			pw->last_update = time_now();
+		}
+		
+		
+		static vector<Password*> filterGroup(vector<Password*> &pwlist, string group_name)
+		{
+			vector<Password*> group;
+			for(int i = 0; i < pwlist.size(); i++)
+			{
+				if(strcmp(pwlist[i]->group.c_str(), group_name.c_str()) == 0)
+				{
+					group.push_back(pwlist[i]);
+					pwlist.erase(pwlist.begin() + i);
+					i--;
+				}
+			}
+			return group;
+		}
+		
+		static vector<string> toString(vector<Password*> pwlist)
+		{
+			vector<string> result;
+			for(int i = 0; i < pwlist.size(); i++)
+			{
+				result.push_back(pwlist[i]->account);
+			}
+			return result;
+		}
+		
+		static pair<vector<Password*>, vector<string> > parseFile(string fileName, string key)
+		{
+			// Decrypts ENC_PASSWORD_FILE into PASSWORD_FILE
+			decryptPasswordFile(key);
+			
 			ifstream fin(fileName);
 			vector<Password*> list;
+			
+			map<string, bool> group_seen;
+			vector<string> groups;
 			
 			while(!fin.eof())
 			{
@@ -165,6 +208,11 @@ class Password
 					// for whatever reason, the stream doesn't close after the final character
 					if(pass == NULL)
 						break;
+					if(group_seen[pass->group] == false)
+					{
+						group_seen[pass->group] = true;
+						groups.push_back(pass->group);
+					}
 					list.push_back(pass);
 				}
 				catch(int e)
@@ -176,11 +224,11 @@ class Password
 			
 			fin.close();
 			
-			return list;
+			return make_pair(list, groups);
 		}
 		
 		// Side effect: clear pwlist to ensure passwords are not retained in memory (might not be zeroed)
-		static void writeFile(string fileName, vector<Password*> &pwlist)
+		static void writeFile(string fileName, vector<Password*> &pwlist, string key)
 		{
 			ofstream fout(fileName);
 			
@@ -194,6 +242,9 @@ class Password
 			
 			pwlist.clear();
 			fout.close();
+			
+			// Encrypts the PASSWORD_FILE into ENC_PASSWORD_FILE and deletes the original
+			encryptPasswordFile(key);
 		}
 		
 		// Side effect: delete pw to ensure nothing sensitive is stored in memory
@@ -206,7 +257,7 @@ class Password
 			fout.close();
 		}
 		
-		static string passwordMenu(vector<Password*> &pwlist)
+		/*static string passwordMenu(vector<Password*> &pwlist)
 		{
 			vector<string> accts;
 			for(int i = 0; i < pwlist.size(); i++)
@@ -220,7 +271,29 @@ class Password
 					accts[i] += "\t\tRESETTING ON EXIT";
 			}
 			
-			return "Stored Passwords\n" + get_menu(accts);
+			return "Stored Passwords:\n" + get_menu(accts);
+		}
+		
+		
+		static string tiersMenu(void)
+		{
+			vector<string> tiers_str;
+			for(int i = 0; i < tiers.size(); i++)
+			{
+				tiers_str.push_back(tiers[i].second);
+			}
+			
+			return "Select a Tier:\n" + get_menu(tiers_str);
+		}*/
+		
+		static vector<string> tierStringList(void)
+		{
+			vector<string> tiers_str;
+			for(int i = 0; i < NUM_TIERS; i++)
+			{
+				tiers_str.push_back(tiers[i].second);
+			}
+			return tiers_str;
 		}
 		
 		
@@ -229,11 +302,37 @@ class Password
 		{
 			return ciphertext;
 		}
+		
+		void setTier(int t)
+		{
+			tier = tiers[t].first;
+		}
+		
+		string getAccount(void)
+		{
+			return account;
+		}
+		
+		string getGroup(void)
+		{
+			return group;
+		}
+		
+		void setGroup(string g)
+		{
+			group = g;
+		}
+		
+		string toString(void)
+		{
+			return account + ": " + tiers[tier].second + " | " + to_string(daysToReset(this)) + " days until next password reset";
+		}
 };
 
 // INIT STATIC VALUES
 const string Password::STORAGE_FORMAT = "%s, %d, %s, %s, %d\n";
 const long long Password::tier_freq[] = {0, 0, 4, 12};
+const int Password::NUM_TIERS = 4;
 const pair<Tier, string> Password::tiers[] = 
 	{
 		make_pair(NONE, "No info"), make_pair(EMAIL, "Public Contact Info"), 
