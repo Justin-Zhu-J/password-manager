@@ -27,11 +27,11 @@ bool check_key(std::string key) {
 
 bool encryptPasswordFile(string key)
 {
-	string error_text = exec(format_command("echo \"%s\" > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
+	/*string error_text = exec(format_command("echo \"%s\" > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
 	if(error_text.length() != 0)
-		return false;
+		return false;*/
 	
-	error_text = exec(format_command("openssl enc -aes-256-cbc -salt -in %s -out %s -pass file:%s -pbkdf2", PASSWORD_FILE, ENC_PASSWORD_FILE, KEY_FILE));
+	string error_text = exec(format_command("openssl enc -aes-256-cbc -salt -in %s -out %s -pass file:%s -pbkdf2", PASSWORD_FILE, ENC_PASSWORD_FILE, KEY_FILE));
 	if(error_text.length() != 0)
 		return false;
 	
@@ -44,11 +44,17 @@ bool encryptPasswordFile(string key)
 
 bool decryptPasswordFile(string key)
 {
-	string error_text = exec(format_command("echo \"%s\" > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
+	/*string error_text = exec(format_command("echo \"%s\" > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
 	if(error_text.length() != 0)
-		return false;
+		return false;*/
+	cout << "Please background this current program and run: \"" << 
+		format_command("openssl rsautl -decrypt -inkey %s -in %s -out %s", PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE)
+		<< "\" and then return to this program." << endl;
+	string waiting;
+	cin >> waiting;
 	
-	error_text = exec(format_command("openssl enc -d -aes-256-cbc -in %s -out %s -pass file:%s -pbkdf2", ENC_PASSWORD_FILE, PASSWORD_FILE, KEY_FILE));
+	
+	string error_text = exec(format_command("openssl enc -d -aes-256-cbc -in %s -out %s -pass file:%s -pbkdf2", ENC_PASSWORD_FILE, PASSWORD_FILE, KEY_FILE));
 	if(error_text.length() != 0)
 		return false;
 	

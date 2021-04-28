@@ -12,7 +12,7 @@ char* format_command(string format, string a = "", string b = "", string c = "",
 	// +2 is an arbitrary number meant to reduce chances of an out-of-bounds error
 	char *temp = new char[format.length() + a.length() + b.length() + c.length() + d.length() + e.length() + 2];
 	sprintf(temp, format.c_str(), a.c_str(), b.c_str(), c.c_str(), d.c_str(), e.c_str());
-	printf("Command: %s\n", temp);
+	//printf("Command: %s\n", temp);
 	return temp;
 }
 
