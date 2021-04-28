@@ -27,7 +27,7 @@ bool check_key(std::string key) {
 
 bool encryptPasswordFile(string key)
 {
-	/*string error_text = exec(format_command("echo %s > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
+	string error_text = exec(format_command("echo \"%s\" > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
 	if(error_text.length() != 0)
 		return false;
 	
@@ -36,14 +36,15 @@ bool encryptPasswordFile(string key)
 		return false;
 	
 	exec(format_command("rm %s", KEY_FILE));
-	exec(format_command("rm %s", PASSWORD_FILE));*/
+	exec(format_command("rm %s", PASSWORD_FILE));
 	
 	return error_text.length() == 0;
+	return true;
 }
 
 bool decryptPasswordFile(string key)
 {
-	/*string error_text = exec(format_command("echo %s > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
+	string error_text = exec(format_command("echo \"%s\" > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
 	if(error_text.length() != 0)
 		return false;
 	
@@ -51,7 +52,7 @@ bool decryptPasswordFile(string key)
 	if(error_text.length() != 0)
 		return false;
 	
-	exec(format_command("rm %s", KEY_FILE));*/
+	//exec(format_command("rm %s", KEY_FILE));
 	
 	return true;
 }
@@ -59,6 +60,10 @@ bool decryptPasswordFile(string key)
 /*
 bool oneTimeSetup(void)
 {
+	// openssl rand -base64 32 > KEY_FILE
+	// openssl rsautl -encrypt -inkey PUBLIC_KEY -pubin -in KEY_FILE -out ENC_KEY_FILE
+	// openssl enc -aes-256-cbc -salt -in PASSWORD_FILE -out ENC_PASSWORD_FILE -pass file:KEY_FILE -pbkdf2
+
 	string error_text = exec(format_command("echo %s > openssl rsautl -decrypt -inkey %s -in %s -out %s", key, PRIVATE_KEY, ENC_KEY_FILE, KEY_FILE));
 	if(error_text.length() != 0)
 		return false;
