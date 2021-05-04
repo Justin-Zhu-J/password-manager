@@ -2,7 +2,7 @@
 using namespace std;
 
 string getPassword(Password *pw,string key);
-Password* createPassword(string key);
+Password* createPassword(string key, string group);
 Password* changePassword(Password *pw,string key);
 string deletePassword(Password *pw, string key);
 void updatePasswordTier(Password *pw);
@@ -37,8 +37,14 @@ int main(void)
 	
 	while(true)
 	{
+		if(groups.size() <= 0)
+		{
+			groups.push_back("NONE");
+		}
+	
 		int group_num = menu_choice(groups, "Please select a password group to access or exit:");
-		if(group_num < 0 or group_num >= groups.size())
+		
+		if(groups.size() > 0 and (group_num < 0 or group_num >= groups.size()))
 		{
 			cout << "Exiting..." << endl;
 			break;
@@ -79,18 +85,20 @@ int main(void)
 					if(not selected)
 					{
 						cout << UNSELECTED_MESSAGE << endl;
+						break;
 					}
 					password = getPassword(group[index], key);
 					break;
 				case 2:
 					// Create password
-					group.push_back(createPassword(key));
+					group.push_back(createPassword(key, groups[group_num]));
 					break;
 				case 3:
 					// Change password
 					if(not selected)
 					{
 						cout << UNSELECTED_MESSAGE << endl;
+						break;
 					}
 					group[index] = changePassword(group[index], key);
 					break;
@@ -99,6 +107,7 @@ int main(void)
 					if(not selected)
 					{
 						cout << UNSELECTED_MESSAGE << endl;
+						break;
 					}
 					password = deletePassword(group[index], key);
 					temp_ptr = group[index];
@@ -110,6 +119,7 @@ int main(void)
 					if(not selected)
 					{
 						cout << UNSELECTED_MESSAGE << endl;
+						break;
 					}
 					updatePasswordTier(group[index]);
 					break;
@@ -118,6 +128,7 @@ int main(void)
 					if(not selected)
 					{
 						cout << UNSELECTED_MESSAGE << endl;
+						break;
 					}
 					changePasswordGroup(group[index]);
 					
@@ -197,7 +208,7 @@ string inputPassword(void)
 	return getpass("Please enter your existing password: ");
 }
 
-Password* createPassword(string key)
+Password* createPassword(string key, string group="NONE")
 {
 	cout << "Please enter the name of the account you would like to store the password of:" << endl;
 	string account;
@@ -206,7 +217,7 @@ Password* createPassword(string key)
 	string plaintext = inputPassword();
 	
 	string ciphertext = remove_endline(encrypt(plaintext, key));
-	return new Password(account, NONE, ciphertext, "NONE");
+	return new Password(account, NONE, ciphertext, group);
 }
 
 Password* changePassword(Password *pw, string key)
