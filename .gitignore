@@ -32,9 +32,15 @@
 *.app
 [a-z]*(_[a-z]*)?
 
-# Hidden Files and Secrets
-((\.[a-z]*)+)
-
 # Backup files
 .*~
 
+<<<<<<< HEAD
+=======
+# Irrelevant files
+gitignore/*
+
+# Secret Files
+.*
+.secrets.h
+>>>>>>> f1963ee... Update gitignore again
