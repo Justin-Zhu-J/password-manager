@@ -35,12 +35,9 @@
 # Backup files
 .*~
 
-<<<<<<< HEAD
-=======
 # Irrelevant files
 gitignore/*
 
 # Secret Files
 .*
 .secrets.h
->>>>>>> f1963ee... Update gitignore again
